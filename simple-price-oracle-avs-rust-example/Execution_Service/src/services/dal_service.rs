@@ -37,20 +37,17 @@ impl Config {
 }
 
 // Global Config instance
-static mut CONFIG: Option<Config> = None;
+static mut CONFIG: OnceLock<Config> = OnceLock::new();
 
 // Set up global Config (can be called once at initialization)
 pub fn init_config(private_key: String, eth_rpc_url: String) {
-    unsafe {
-        CONFIG = Some(Config::new(private_key, eth_rpc_url));
-    }
+    let state = Config::new(private_key, eth_rpc_url);
+    let _ = CONFIG.set(state);
 }
 
 pub async fn send_task(proof_of_task: String, task_definition_id: i32) -> Result<(), Box<dyn Error>> {
     // Access global Config
-    let config = unsafe {
-        CONFIG.as_ref().expect("Config is not initialized")
-    };
+    let config = CONFIG.get().expect("Config is not initialized");
     let data = "hello";
     let result = Bytes::from(data.as_bytes().to_vec());
 
